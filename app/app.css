@@ -1,0 +1,51 @@
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-container {
+  display: flex;
+  flex-direction: row; /* Horizontal layout */
+  height: 100%;
+}
+
+.left-section {
+  flex: 1; /* Take up half the width */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Push the button to the bottom */
+  border-right: 1px solid #ccc; /* Divider between sections */
+  padding: 20px;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+}
+
+.send-button-container {
+  display: flex;
+  justify-content: center;
+}
+
+.right-section {
+  flex: 1; /* Take up half the width */
+  overflow-y: auto; /* Scrollable for long content */
+  padding: 20px;
+  display: flex;
+  flex-direction: column; /* Stack responses vertically */
+}
+
+.response-item {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.send-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+}
