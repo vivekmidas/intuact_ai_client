@@ -24,6 +24,18 @@ Install the dependencies:
 npm install
 ```
 
+or
+
+```bash
+pnpm install
+```
+
+or (preferred)
+
+```bash
+yarn
+```
+
 ### Development
 
 Start the development server with HMR:
