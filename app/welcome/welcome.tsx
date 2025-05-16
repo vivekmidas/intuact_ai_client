@@ -1,53 +1,138 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; // Add this import
+import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import '../App.css'; // Add this for custom styles
+import { Header } from '../components/Header';
+import { ChatInput } from '../components/ChatInput';
+import { ChatMessages } from '../components/ChatMessages';
+import { Suggestions } from '../components/Suggestions';
+
+import { ConversationHistoryModal } from '../components/ConversationHistoryModal';
+import '../App.css';
+
+// Define types for your messages and responses
+type Message = {
+  type: 'user' | 'bot';
+  text: string;
+  timestamp: Date;
+  sentiment?: string;
+};
+
+type BotResponse = {
+  type: 'bot';
+  text: string;
+  timestamp: Date;
+  sentiment: string;
+};
 
 function App() {
-  const [inputText, setInputText] = useState('can u help me with my problem?');
-  const [ollamaResponses, setOllamaResponses] = useState([]);
+  //const navigate = useNavigate(); // Add this hook
+  const [inputText, setInputText] = useState('can you help me with my problem?');
+  const [ollamaResponses, setOllamaResponses] = useState<BotResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState([]); // Move this here
+  const [messages, setMessages] = useState<Message[]>([]);
   const [acceptedResponses, setAcceptedResponses] = useState(new Set());
-  const inputRef = useRef(null);
+  const [latestSentiment, setLatestSentiment] = useState<string | null>(null);
+
+  const [userId] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedUserId = window.localStorage.getItem('userId');
+        return savedUserId || uuidv4();
+      } catch (error) {
+        console.error('Error accessing localStorage:', error);
+        return uuidv4();
+      }
+    }
+    return uuidv4();
+  });
+
+  const [sessionId, setSessionId] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedSessionId = window.sessionStorage.getItem('sessionId');
+        return savedSessionId || uuidv4();
+      } catch (error) {
+        console.error('Error accessing sessionStorage:', error);
+        return uuidv4();
+      }
+    }
+    return uuidv4();
+  });
+
+  const [conversationHistory, setConversationHistory] = useState([]);
   const responseEndRef = useRef(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const handleInputChange = (event) => {
     setInputText(event.target.value);
   };
 
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     try {
+  //       window.localStorage.setItem('userId', userId);
+  //       fetchConversationHistory();
+  //     } catch (error) {
+  //       console.error('Error setting localStorage:', error);
+  //     }
+  //   }
+  // }, [userId]);
 
+  console.log('userId', userId);
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionId) {
+      try {
+        window.sessionStorage.setItem('sessionId', sessionId);
+      } catch (error) {
+        console.error('Error setting sessionId in sessionStorage:', error);
+      }
+    }
+  }, [sessionId]);
+  console.log('sessionId', sessionId);
+  const fetchConversationHistory = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/conversations/${userId}`);
+      setConversationHistory(response.data.conversations);
+    } catch (error) {
+      console.error('Error fetching conversation history:', error);
+    }
+  };
 
-  // Modify handleSend function
   const handleSend = async () => {
     if (inputText.trim() === '') return;
-
-    // Store the user's message with timestamp
-    const userMessage = {
-      type: 'user',
-      text: inputText,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, userMessage]);
 
     setIsLoading(true);
     try {
       const response = await axios.post('http://localhost:5000/api/chat', {
-        prompt: inputText,
         message: inputText,
-        model: 'vivek-llama-3.2:1',
+        user_id: userId,
+        session_id: sessionId
       });
 
-      // Add bot response with timestamp when accepted
+      // Use the sentiment from the API response for the user message
+      const userMessage = {
+        type: 'user',
+        text: inputText,
+        timestamp: new Date(),
+        sentiment: response.data.sentiment
+      };
+      setMessages(prev => [...prev, userMessage]);
+
       const botResponse = {
         type: 'bot',
-        text: response.data.response.generations[0][0].text,
+        text: response.data.response.content,
         timestamp: new Date(),
-        sentiment: analyzeSentiment(response.data.response),
-        intent: analyzeIntent(response.data.response),
+        sentiment: response.data.sentiment
       };
 
+      if (response.data.id) {
+        setSessionId(response.data.id);
+      }
+
       setOllamaResponses(prev => [...prev, botResponse]);
-      setInputText('');
+      setLatestSentiment(response.data.sentiment);
+      setInputText('What else can I help you with?');
     } catch (error) {
       console.error('Error calling Ollama API:', error);
     } finally {
@@ -55,8 +140,6 @@ function App() {
     }
   };
 
-
-  // Modify handleAcceptResponse to add the response to messages
   const handleAcceptResponse = (index) => {
     const response = ollamaResponses[index];
     setMessages(prev => [...prev, {
@@ -67,131 +150,44 @@ function App() {
     setAcceptedResponses(prev => new Set([...prev, index]));
   };
 
-
-
-
-  const scrollToBottom = () => {
-    if (responseEndRef.current) {
-      responseEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.clear();
+      window.location.href = '/';
     }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [ollamaResponses]);
-
-  const analyzeSentiment = (text) => {
-    const randomNumber = Math.random();
-    if (randomNumber < 0.33) {
-      return 'Negative';
-    } else if (randomNumber < 0.66) {
-      return 'Neutral';
-    } else {
-      return 'Positive';
-    }
-  };
-
-  const analyzeIntent = (text) => {
-    const intents = ['Question', 'Statement', 'Request', 'Greeting'];
-    const randomIndex = Math.floor(Math.random() * intents.length);
-    return intents[randomIndex];
   };
 
   return (
     <div className="app-container">
-      <header className="top-panel">
-        <div className="logo">
-          <img src="/logo.png" alt="Logo" width={48} height={48} />
-        </div>
-        <div className="user-profile">
-          <div className="dropdown">
-            <button className="dropdown-button">
-              <img src="/profile-icon.png" alt="Profile" width={36} height={36}/>
-            </button>
-            <div className="dropdown-content">
-              <a href="#" onClick={() => handleLogout()}>Logout</a>
-              <a href="#" onClick={() => handleHistory()}>Check History</a>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        onHistoryClick={() => setIsHistoryModalOpen(true)}
+        onLogout={handleLogout}
+      />
 
       <div className="split-container">
-        {/* Left Section */}
-
         <section className="left-section">
-          <div className="conversation-container">
-            <div className="messages">
-              {messages.map((message, index) => (
-                <div
-                  key={`message-${index}`}
-                  className={message.type === 'user' ? 'user-message' : 'accepted-response'}
-                >
-                  <div className="message-text">{message.text}</div>
-                  <div className="message-timestamp">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="input-container">
-            <input
-              type="text"
-              value={inputText}
-              onChange={handleInputChange}
-              placeholder="Enter your message"
-              ref={inputRef}
-              className="input-field"
-            />
-
-            <button
-              onClick={handleSend}
-              disabled={isLoading}
-              className="send-button"
-            >
-              {isLoading ? 'Sending...' : ''}
-              <img src="/send-icon.png" alt="Send" className="send-icon" />
-            </button>
-          </div>
+          <ChatMessages messages={messages} />
+          <ChatInput
+            inputText={inputText}
+            isLoading={isLoading}
+            onInputChange={handleInputChange}
+            onSend={handleSend}
+          />
         </section>
 
-        {/* Right Section */}
-        {/* Right Section */}
-        <section className="right-section">
-          {ollamaResponses.map((response, index) => (
-            <div key={index} className="response-item">
-              <div className="response-content">
-                <div>
-                  <p>
-                    <strong>Suggestion:</strong> {response.text}
-                  </p>
-                  <div className="message-timestamp">
-                    {response.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </div>
-                </div>
-                <button
-                  className={`accept-button ${acceptedResponses.has(index) ? 'accepted' : ''}`}
-                  onClick={() => handleAcceptResponse(index)}
-                  disabled={acceptedResponses.has(index)}
-                >
-                  {acceptedResponses.has(index) ? '✓' : 'Accept'}
-                </button>
-              </div>
-            </div>
-          ))}
-          <div ref={responseEndRef} />
-        </section>
+        <Suggestions
+          suggestions={ollamaResponses}
+          acceptedResponses={acceptedResponses}
+          onAccept={handleAcceptResponse}
+        />
       </div>
+
+      <ConversationHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        conversations={conversationHistory}
+      />
     </div>
   );
 }

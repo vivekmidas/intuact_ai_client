@@ -1,3 +1,7 @@
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { AppRouter } from './AppRouter';
+
 import {
   isRouteErrorResponse,
   Links,
@@ -73,3 +77,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     </main>
   );
 }
+
+export const Root: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  );
+};
