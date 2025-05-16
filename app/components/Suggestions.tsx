@@ -10,12 +10,14 @@ interface SuggestionsProps {
   suggestions: Suggestion[];
   acceptedResponses: Set<number>;
   onAccept: (index: number) => void;
+  onReject: (index: number) => void;
 }
 
-export const Suggestions: React.FC<SuggestionsProps> = ({ 
-  suggestions, 
-  acceptedResponses, 
-  onAccept 
+export const Suggestions: React.FC<SuggestionsProps> = ({
+  suggestions,
+  acceptedResponses,
+  onAccept,
+  onReject
 }) => {
   return (
     <section className="right-section">
@@ -24,7 +26,6 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
           <div className="response-content">
             <div>
               <p><strong>Suggestion:</strong> {suggestion.text}</p>
-              <p><strong>Sentiment:</strong> {suggestion.sentiment}</p>
               <div className="message-timestamp">
                 {suggestion.timestamp.toLocaleTimeString([], {
                   hour: '2-digit',
@@ -33,13 +34,22 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
                 })}
               </div>
             </div>
-            <button
-              className={`accept-button ${acceptedResponses.has(index) ? 'accepted' : ''}`}
-              onClick={() => onAccept(index)}
-              disabled={acceptedResponses.has(index)}
-            >
-              {acceptedResponses.has(index) ? '✓' : 'Accept'}
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className={`accept-button ${acceptedResponses.has(index) ? 'accepted' : ''}`}
+                onClick={() => onAccept(index)}
+                disabled={acceptedResponses.has(index)}
+              >
+                {acceptedResponses.has(index) ? '✓' : 'Accept'}
+              </button>
+              <button
+                className="reject-button"
+                onClick={() => onReject(index)}
+                disabled={acceptedResponses.has(index)}
+              >
+                Reject
+              </button>
+            </div>
           </div>
         </div>
       ))}
