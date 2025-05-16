@@ -10,11 +10,13 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  margin-top: 60px; /* Add this line to prevent content from being hidden under the header */
 }
 
 /* Top Panel */
 .top-panel {
   position: fixed;
+  margin: 1rem;
   top: 0;
   left: 0;
   right: 0;
@@ -65,13 +67,29 @@
   gap: 16px;
 }
 
-.user-message {
+.user-message,
+.bot-message {
+  max-width: 70%;
+  width: 70%;
   padding: 12px 16px;
-  background-color: #f0f0f0;
   border-radius: 12px;
-  max-width: 80%;
-  align-self: flex-start;
   color: #333333;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.user-message {
+  background-color: #f0f0f0;
+  align-self: flex-start;
+  margin-right: auto;
+  text-align: left;
+}
+
+.bot-message {
+  background-color: #e8f5e9;
+  align-self: flex-end;
+  margin-left: auto;
+  text-align: right;
 }
 
 .accepted-response {
@@ -207,6 +225,20 @@
   background-color: #4caf50;
   color: white;
   cursor: default;
+}
+
+.reject-button {
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.reject-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Custom Scrollbar */
@@ -440,4 +472,9 @@
 
 .auth-form button:hover {
   background-color: #45a049;
+}
+
+.suggestion-rejected {
+  background: #eee !important;
+  color: #aaa !important;
 }
