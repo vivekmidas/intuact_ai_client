@@ -37,7 +37,7 @@ function App() {
   const [userId] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedUserId = window.localStorage.getItem('userId');
+        const savedUserId = window.sessionStorage.getItem('userId');
         return savedUserId || uuidv4();
       } catch (error) {
         console.error('Error accessing localStorage:', error);
@@ -79,7 +79,7 @@ function App() {
   //   }
   // }, [userId]);
 
-  console.log('userId', userId);
+
   useEffect(() => {
     if (typeof window !== "undefined" && sessionId) {
       try {
@@ -89,7 +89,7 @@ function App() {
       }
     }
   }, [sessionId]);
-  console.log('sessionId', sessionId);
+
   const fetchConversationHistory = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/api/conversations/${userId}`);
@@ -121,7 +121,7 @@ function App() {
 
       const botResponse = {
         type: 'bot',
-        text: response.data.response.content,
+        text: response.data.response,
         timestamp: new Date(),
         sentiment: response.data.sentiment
       };
@@ -153,6 +153,7 @@ function App() {
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       window.localStorage.clear();
+      window.sessionStorage.clear();
       window.location.href = '/';
     }
   };
