@@ -1,33 +1,50 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Home } from './pages/Home';
-import App from './welcome/welcome';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import RootRedirect from './RootRedirect';
+import HomePage from './home/HomePage';
+import WelcomePage from './welcome/welcome';
 
-const isAuthenticated = () => {
-    return window.localStorage.getItem('isAuthenticated') === 'true';
-};
-
+// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (!isAuthenticated()) {
-        return <Navigate to="/" replace />;
+    const sessionId = sessionStorage.getItem('sessionId');
+    const isAuthenticated = sessionId && sessionId.trim().length > 0;
+    console.log('ProtectedRoute: Current sessionId:', sessionId);
+    if (!isAuthenticated) {
+        return <Navigate to="/home" replace />;
     }
+
     return <>{children}</>;
 };
 
-export const AppRouter = () => {
+function App() {
+    useEffect(() => {
+        console.log('App: Component mounted');
+    }, []);
+
     return (
-        <BrowserRouter>
+        <Router>
             <Routes>
-                <Route path="/" element={<Home />} />
+                {/* Root route redirects based on auth state */}
+                <Route path="/" element={<RootRedirect />} />
+
+                {/* Public route */}
+                <Route path="/home" element={<HomePage />} />
+
+                {/* Protected route */}
                 <Route
                     path="/welcome"
                     element={
                         <ProtectedRoute>
-                            <App />
+                            <WelcomePage />
                         </ProtectedRoute>
                     }
                 />
+
+                {/* Catch all route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        </BrowserRouter>
+        </Router>
     );
-};
+}
+
+export default App;

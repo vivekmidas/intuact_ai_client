@@ -1,18 +1,33 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import App from './welcome/welcome';
-import { Home } from './pages/Home';
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = window.localStorage.getItem('isAuthenticated') === 'true';
-  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
-};
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import HomePage from './home/HomePage';
+import WelcomePage from './welcome/welcome';
 
 export const AppRouter: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/welcome" element={<ProtectedRoute><App /></ProtectedRoute>} />
-    </Routes>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<HomePage />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/welcome"
+            element={
+              <ProtectedRoute>
+                <WelcomePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };

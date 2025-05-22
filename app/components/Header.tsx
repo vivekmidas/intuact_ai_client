@@ -19,16 +19,15 @@ export const Header: React.FC<HeaderProps> = ({ onHistoryClick, onLogout }) => {
         />
       </div>
       <div className="user-profile">
-        <div className="dropdown">
-          <button className="dropdown-button">
-            <FontAwesomeIcon icon={faUser} className="fa-2x" />
-          </button>
-          <div className="dropdown-content">
-            <a href="#" onClick={onHistoryClick}>Check History</a>
-            <a href="#" onClick={onLogout}>Logout</a>
-          </div>
+
+
+        <div className="dropdown-content">
+          <FontAwesomeIcon icon={faUser} className="fa-2x" />
+          <a href="#" className='history-btn' onClick={onHistoryClick}>Check History</a>
+          <a href="#" className='logout-btn' onClick={onLogout}>Logout</a>
         </div>
       </div>
+
     </header>
   );
 };

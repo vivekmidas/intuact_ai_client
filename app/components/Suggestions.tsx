@@ -6,11 +6,17 @@ interface Suggestion {
   timestamp: Date;
 }
 
+interface BotResponse {
+  text: string;
+  sentiment: string;
+  timestamp: Date;
+}
+
 interface SuggestionsProps {
-  suggestions: Suggestion[];
+  suggestions: BotResponse[];
   acceptedResponses: Set<number>;
   onAccept: (index: number) => void;
-  onReject: (index: number) => void;
+  onReject?: (index: number) => void;
 }
 
 export const Suggestions: React.FC<SuggestionsProps> = ({
@@ -22,8 +28,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
   return (
     <section className="right-section">
       {suggestions.map((suggestion, index) => (
-        <div key={index} className="response-item">
-          <div className="response-content">
+        <div key={index} className="suggestions-panel">
+          <div className="suggestions-panel">
             <div>
               <p><strong>Suggestion:</strong> {suggestion.text}</p>
               <div className="message-timestamp">
@@ -44,7 +50,7 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
               </button>
               <button
                 className="reject-button"
-                onClick={() => onReject(index)}
+                onClick={() => onReject?.(index)}
                 disabled={acceptedResponses.has(index)}
               >
                 Reject

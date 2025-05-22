@@ -15,23 +15,21 @@ type Message = {
   type: 'user' | 'bot';
   text: string;
   timestamp: Date;
-  sentiment?: string;
+  sentiment?: string;  // Make sentiment optional with ?
 };
 
-type BotResponse = {
-  type: 'bot';
-  text: string;
-  timestamp: Date;
-  sentiment: string;
+type BotResponse = Message & {
+  type: 'bot';  // This ensures type is specifically 'bot'
+  sentiment: string;  // Required for BotResponse
 };
 
 function App() {
   //const navigate = useNavigate(); // Add this hook
-  const [inputText, setInputText] = useState('can you help me with my problem?');
+  const [inputText, setInputText] = useState('hello, my name is Vivek?');
   const [ollamaResponses, setOllamaResponses] = useState<BotResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [acceptedResponses, setAcceptedResponses] = useState(new Set());
+  const [acceptedResponses, setAcceptedResponses] = useState<Set<number>>(new Set());
   const [latestSentiment, setLatestSentiment] = useState<string | null>(null);
 
   const [userId] = useState(() => {
@@ -64,7 +62,12 @@ function App() {
   const responseEndRef = useRef(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(event.target.value);
+  };
+
+  // If you're using a textarea instead of an input:
+  const handleInputChangeForTextarea = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(event.target.value);
   };
 
@@ -83,7 +86,7 @@ function App() {
   useEffect(() => {
     if (typeof window !== "undefined" && sessionId) {
       try {
-        window.sessionStorage.setItem('sessionId', sessionId);
+        //window.sessionStorage.setItem('sessionId', sessionId);
       } catch (error) {
         console.error('Error setting sessionId in sessionStorage:', error);
       }
@@ -110,8 +113,7 @@ function App() {
         session_id: sessionId
       });
 
-      // Use the sentiment from the API response for the user message
-      const userMessage = {
+      const userMessage: Message = {
         type: 'user',
         text: inputText,
         timestamp: new Date(),
@@ -119,7 +121,7 @@ function App() {
       };
       setMessages(prev => [...prev, userMessage]);
 
-      const botResponse = {
+      const botResponse: BotResponse = {
         type: 'bot',
         text: response.data.response,
         timestamp: new Date(),
@@ -132,7 +134,7 @@ function App() {
 
       setOllamaResponses(prev => [...prev, botResponse]);
       setLatestSentiment(response.data.sentiment);
-      setInputText('What else can I help you with?');
+      setInputText('what is my name');
     } catch (error) {
       console.error('Error calling Ollama API:', error);
     } finally {
@@ -140,14 +142,15 @@ function App() {
     }
   };
 
-  const handleAcceptResponse = (index) => {
+  const handleAcceptResponse = (index: number) => {
     const response = ollamaResponses[index];
     setMessages(prev => [...prev, {
-      type: 'bot',
+      type: 'bot' as const,
       text: response.text,
       timestamp: response.timestamp,
+      sentiment: response.sentiment  // Include sentiment from the response
     }]);
-    setAcceptedResponses(prev => new Set([...prev, index]));
+    setAcceptedResponses(prev => new Set<number>([...prev, index]));
   };
 
   const handleLogout = () => {

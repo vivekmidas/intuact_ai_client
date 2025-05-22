@@ -19,7 +19,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => (
           key={`message-${index}`}
           className={message.type === 'user' ? 'user-message' : 'bot-message'}
         >
-          <div className="message-text">{message.text}</div>
+          <div className={`message-bubble ${message.type}`}>
+            <div className="message-content">
+              <span>{message.text}</span>
+            </div>
+          </div>
+
           <div className="message-timestamp">
             {message.timestamp.toLocaleTimeString([], {
               hour: '2-digit',
